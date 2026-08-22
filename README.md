@@ -49,7 +49,7 @@ The built-in provider already covers `env` and `permissionMode`. This fork adds 
 # Local directory:
 dsh plugin --profile web add /path/to/dsh-subagent-claude-code-wrapper
 
-# npm (once published):
+# npm:
 dsh plugin --profile web add @yaways/dsh-subagent-claude-code-wrapper
 
 # GitHub:

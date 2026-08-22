@@ -49,7 +49,7 @@ DSH 自带的 provider 已经覆盖了 `env` 和 `permissionMode`。这个 fork 
 # 本地目录：
 dsh plugin --profile web add /path/to/dsh-subagent-claude-code-wrapper
 
-# npm（发布后）：
+# npm：
 dsh plugin --profile web add @yaways/dsh-subagent-claude-code-wrapper
 
 # GitHub：
