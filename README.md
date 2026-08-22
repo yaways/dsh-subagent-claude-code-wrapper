@@ -1,6 +1,6 @@
 # @yaways/dsh-subagent-claude-code-wrapper
 
-> 中文版见 [README_EN.md](./README_EN.md)
+> 中文版见 [README_ZH.md](./README_ZH.md)
 
 Lets [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) delegate subagent work to **any Claude-compatible CLI binary** — not just the SDK-bundled official one.
 
