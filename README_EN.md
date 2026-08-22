@@ -1,66 +1,66 @@
 # @yaways/dsh-subagent-claude-code-wrapper
 
-> 中文版见 [README.md](./README.md)
+> 英文版见 [README.md](./README.md)
 
-Lets [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) delegate subagent work to **any Claude-compatible CLI binary** — not just the SDK-bundled official one.
+让 [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) 的 subagent 委派工具，可以调用**任意一个 Claude 兼容的 CLI 二进制**——而不只是 SDK 自带的那个官方 CLI。
 
-Forked from DSH's built-in `dsh-subagent-claude-code` with one added config field: `executablePath`.
-
----
-
-## What problem this solves
-
-DSH's built-in `subagent-claude-code` provider hardcodes the SDK-bundled official Claude Code CLI. But some environments run a different Claude-compatible CLI — an enterprise fork, a self-built binary, a pinned version, or a wrapper script that injects extra flags. This plugin exposes the SDK's existing `pathToClaudeCodeExecutable` option as a config field, so you don't need to patch DSH source.
-
-DSH doesn't accept external PRs (see its `CONTRIBUTING.md`); community plugins are the supported way to extend it. This package follows that path: a copy of the built-in provider's source plus one field, shipped as an independent bundle — DSH updates never touch it.
+从 DSH 自带的 `dsh-subagent-claude-code` fork 而来，只加了一个配置项：`executablePath`。
 
 ---
 
-## Config
+## 这个插件解决什么问题
 
-| Field | Default | What it does |
+DSH 自带的 `subagent-claude-code` provider，写死了用 SDK 内置的官方 Claude Code CLI。但有些环境跑的是另一个 Claude 兼容 CLI——企业内部 fork、自建二进制、锁定版本、或者一个会注入额外参数的包装脚本。这个插件把 SDK 本来就有的 `pathToClaudeCodeExecutable` 选项暴露成一个配置项，这样你不用改 DSH 源码就能指定用哪个 CLI。
+
+DSH 目前不收外部 PR（见它的 `CONTRIBUTING.md`），社区插件是官方认可的扩展方式。这个包就走这条路：拷一份 DSH 自带 provider 的源码，加一个字段，作为独立 bundle 发布——DSH 升级碰不到它。
+
+---
+
+## 配置项
+
+| 配置项 | 默认值 | 说明 |
 |---|---|---|
-| `providerName` | `claude-code-wrapper` | Name registered on `ctx.subagents`. Distinct from the built-in `claude-code` so both can coexist. |
-| `executablePath` | *(unset → SDK default)* | **Path to your CLI binary.** Fill in where your CLI lives; the plugin spawns it at runtime. |
-| `env` | `{}` | Environment entries passed to the child process, layered over DSH's scrubbed parent environment. |
-| `permissionMode` | `dontAsk` | `dontAsk` / `acceptEdits` / `auto` / `plan` / `bypassPermissions`. |
-| `disposeGraceMs` | `3000` | Grace period in ms for process-tree termination. |
+| `providerName` | `claude-code-wrapper` | 在 `ctx.subagents` 上注册的名字。和自带的 `claude-code` 区分开，两个同时加载也不撞名。 |
+| `executablePath` | *不填则用 SDK 默认* | **你的 CLI 二进制的路径**。填你自己的 CLI 在哪，插件运行时会用它启动子进程。 |
+| `env` | `{}` | 传给子进程的环境变量，覆盖在 DSH 清理过的父环境之上。 |
+| `permissionMode` | `dontAsk` | `dontAsk` / `acceptEdits` / `auto` / `plan` / `bypassPermissions`。 |
+| `disposeGraceMs` | `3000` | 进程树终止的宽限时间（毫秒）。 |
 
-### VS Code extension correspondence
+### 和 VS Code 官方扩展的对应关系
 
-This provider's config aligns with the official Claude Code VS Code extension's launch-contract settings:
+这个 provider 的配置项，和 VS Code 官方 Claude Code 扩展里"启动相关"的设置是一一对应的：
 
-| This plugin | VS Code setting | Notes |
+| 本插件 | VS Code 设置 | 说明 |
 |---|---|---|
-| `executablePath` | `claudeCode.claudeProcessWrapper` | Executable path used to launch the Claude process. |
-| `env` | `claudeCode.environmentVariables` | Child environment overlay (we use a map, VS Code uses an array). |
-| `permissionMode` | `claudeCode.initialPermissionMode` | Session permission mode. |
-| (`permissionMode: bypassPermissions`) | `claudeCode.allowDangerouslySkipPermissions` | Derived from `permissionMode`, not a separate field. |
+| `executablePath` | `claudeCode.claudeProcessWrapper` | 启动 Claude 进程用的可执行文件路径 |
+| `env` | `claudeCode.environmentVariables` | 子进程环境变量（我们用 map，VS Code 用数组） |
+| `permissionMode` | `claudeCode.initialPermissionMode` | 会话权限模式 |
+| (`permissionMode: bypassPermissions`) | `claudeCode.allowDangerouslySkipPermissions` | 由 permissionMode 推导，不单列 |
 
-The built-in provider already covers `env` and `permissionMode`. This fork adds the only missing piece: `executablePath` ↔ `claudeProcessWrapper`.
+DSH 自带的 provider 已经覆盖了 `env` 和 `permissionMode`。这个 fork 补上唯一缺的那块：`executablePath` ↔ `claudeProcessWrapper`。
 
 ---
 
-## Quick start (3 steps)
+## 三步上手
 
-### Step 1 — Install the bundle
+### 第 1 步：装插件
 
 ```sh
-# Local directory:
+# 本地目录：
 dsh plugin --profile web add /path/to/dsh-subagent-claude-code-wrapper
 
-# npm (once published):
+# npm（发布后）：
 dsh plugin --profile web add @yaways/dsh-subagent-claude-code-wrapper
 
-# GitHub:
+# GitHub：
 dsh plugin --profile web add github:yaways/dsh-subagent-claude-code-wrapper
 ```
 
-Verify with `dsh --profile web --dump-default-config` — look for `id: subagent-claude-code-wrapper`.
+装完可以用 `dsh --profile web --dump-default-config` 验证——能看到 `id: subagent-claude-code-wrapper` 就说明注册成功了。
 
-### Step 2 — Point it at your CLI
+### 第 2 步：填你自己的 CLI 路径
 
-Edit `~/.dsh/profiles/web/cordis.patch.yml` and set `executablePath` to **your CLI's actual path**:
+编辑 `~/.dsh/profiles/web/cordis.patch.yml`，把 `executablePath` 填成**你的 CLI 的实际路径**：
 
 ```yaml
 - id: subagent-claude-code-wrapper
@@ -68,169 +68,171 @@ Edit `~/.dsh/profiles/web/cordis.patch.yml` and set `executablePath` to **your C
     executablePath: /opt/your-tools/bin/your-claude-cli
 ```
 
-> **Your CLI can be named anything and live anywhere** — `/usr/local/bin/claude`, `/home/me/bin/my-claude`, or a wrapper script. As long as it speaks the Claude Code CLI protocol, it works. The plugin doesn't care what it's called, only where it is.
+> **你的 CLI 叫什么、装在哪，都行**——可能是 `/usr/local/bin/claude`、`/home/me/bin/my-claude`、或者一个包装脚本。只要它兼容 Claude Code 的命令行协议，填上去就能用。插件不关心它叫什么，只关心它在哪。
 
-If the path differs per machine, use an environment variable so the config stays the same:
+如果你的路径在不同机器上不一样，可以用环境变量，配置不用改：
 
 ```yaml
 - id: subagent-claude-code-wrapper
   config:
     executablePath: !!js process.env.DSH_CLAUDE_CODE_EXECUTABLE
 ```
-Then `export DSH_CLAUDE_CODE_EXECUTABLE=/your/path/your-cli` in your shell.
+然后在 shell 里 `export DSH_CLAUDE_CODE_EXECUTABLE=/your/path/your-cli`。
 
-Verify with `dsh --profile web --dump-config` — the provider row should show your path.
+填完用 `dsh --profile web --dump-config` 验证——provider 行里能看到你的路径就对了。
 
-### Step 3 — Enable the delegation tool in a preset
+### 第 3 步：在预设里启用委派工具
 
-> **Why this step is needed** — see [How it works](#how-it-works) below. Short version: DSH separates *registering a provider* (Host plane, Step 1) from *giving an agent the delegation tool that uses it* (agent plane, this step). The built-in `claude-code` provider requires the same step — this is not specific to this fork.
+> **为什么需要这一步**——见下面的[工作原理](#工作原理)。简单说：DSH 把"注册一个 provider"和"给某个 agent 配委派工具"分成了两步。DSH 自带的 `claude-code` provider 也需要这步，不是这个 fork 的特殊要求。
 
-DSH ships `tool-subagent-claude-code` in every preset with `disabled: true`. The preset's own comment says:
+DSH 在每个预设里都预置了 `tool-subagent-claude-code` 这一行，但默认 `disabled: true`。预设自己的注释说得很清楚：
 
-> *Install the matching Bundle, then copy this preset and remove `disabled` from the matching tool row. Host availability alone grants no tool.*
+> *装上对应的 Bundle 并重启后，复制这个预设并去掉那一行的 `disabled`。光在 Host 层装上 provider，不会自动得到委派工具。*
 
-To enable it for your wrapper provider:
+要让委派走你的 wrapper provider：
 
-**3a.** Copy the shipped `standard` preset into user space with a new id (same-id copies are shadowed by the shipped original — DSH resolves preset duplicates first-root-wins).
+**3a.** 把官方 `standard` 预设复制一份到用户空间，换个名字（同名副本会被官方原版覆盖——DSH 解析重名预设时先到的赢）。
 
-**Option 1: use the DSH Web GUI (recommended)**
+**方式一：用 DSH Web GUI（推荐）**
 
-Open the DSH Web GUI settings, find the **"Agent presets"** section, select `standard`, click "Duplicate", and name the copy `claude-code-wrapper`. Under the hood this copies the entire `standard` preset directory (including `agent.cordis.yml` and `preset.yml`) to `~/.dsh/.agent-presets/claude-code-wrapper/` — no manual path-finding needed.
+打开 DSH Web GUI 的设置，找到「**Agent 预设**」项（英文界面为「Agent presets」），选中 `standard`，点「复制」，把副本命名为 `claude-code-wrapper`。这一步底层会把整个 `standard` 预设目录（含 `agent.cordis.yml` 和 `preset.yml`）拷一份到 `~/.dsh/.agent-presets/claude-code-wrapper/`，你不用手动找路径。
 
-> After duplicating, the copy lands at `~/.dsh/.agent-presets/claude-code-wrapper/agent.cordis.yml`. Edit that file directly in step 3b.
+> 复制后，副本会落在 `~/.dsh/.agent-presets/claude-code-wrapper/agent.cordis.yml`，后面的 3b 直接编辑这个文件。
 
-**Option 2: copy manually from the command line**
+**方式二：命令行手动复制**
 
-If you're not using the Web GUI, or don't see the "Agent presets" entry, a manual `cp` works the same way. The shipped preset's location depends on how you installed dsh:
+如果你没有用 Web GUI，或者设置里没看到「Agent 预设」入口，手动 `cp` 一样可行。shipped 预设的位置取决于你怎么装的 dsh：
 
 ```sh
 mkdir -p ~/.dsh/.agent-presets/claude-code-wrapper
 
-# From a source checkout:
+# 源码 checkout 装的：
 cp <dsh-checkout>/apps/cli/config/agent-presets/standard/agent.cordis.yml \
    ~/.dsh/.agent-presets/claude-code-wrapper/agent.cordis.yml
 
-# From an npm global install (dsh's package name is @deepseek-ai/dsh):
+# npm 全局装的（dsh 的包名是 @deepseek-ai/dsh）：
 cp "$(npm root -g)/@deepseek-ai/dsh/config/agent-presets/standard/agent.cordis.yml" \
    ~/.dsh/.agent-presets/claude-code-wrapper/agent.cordis.yml
 
-# From an npx run — find it in the npx cache:
+# npx 运行的：在 npx 缓存里找，路径形如
+#   ~/.npm/_npx/<hash>/node_modules/@deepseek-ai/dsh/config/agent-presets/standard/agent.cordis.yml
+# 用这个命令定位：
 cp "$(find ~/.npm/_npx -path '*/@deepseek-ai/dsh/config/agent-presets/standard/agent.cordis.yml' 2>/dev/null | head -1)" \
    ~/.dsh/.agent-presets/claude-code-wrapper/agent.cordis.yml
 ```
 
-**3b.** Edit the copy at `~/.dsh/.agent-presets/claude-code-wrapper/agent.cordis.yml`. Find the `tool-subagent-claude-code` row and change two things:
+**3b.** 编辑副本 `~/.dsh/.agent-presets/claude-code-wrapper/agent.cordis.yml`，找到 `tool-subagent-claude-code` 这一行，改两处：
 
 ```yaml
     - id: tool-subagent-claude-code
       name: '@deepseek-ai/dsh-tool-subagent'
-      disabled: true                          # ← remove this line
+      disabled: true                          # ← 删掉这行
       config:
-        provider: claude-code-wrapper          # ← was: claude-code
+        provider: claude-code-wrapper          # ← 原来是 claude-code
         toolName: subagent_claude_code
         backgroundMode: one-shot
         maxDepth: provider-managed
 ```
 
-**3b-2.** In the same directory, create (or edit) `preset.yml` to set the display name and description shown in the UI. A command-line `cp` won't have it; a Web GUI copy will (still showing "Standard mode") — change it to your own:
+**3b-2.** 在同一目录下建（或编辑）`preset.yml`，设置前端显示的名称和描述。命令行 `cp` 的没有这个文件，Web GUI 复制的有（显示名还是「标准模式」），改成你自己的：
 
 ```yaml
 # ~/.dsh/.agent-presets/claude-code-wrapper/preset.yml
 name: Claude Code Wrapper
-description: Standard mode, but subagent delegation uses the claude-code-wrapper provider.
+description: 标准模式的基础上，subagent 委派走 claude-code-wrapper provider。
 ```
 
-> Without this file, the UI display name falls back to the directory name `claude-code-wrapper`.
+> 没有这个文件的话，前端显示名会回退成目录名 `claude-code-wrapper`。
 
-**3c.** Switch the default preset to your copy.
+**3c.** 把默认预设切到你的副本。
 
-> ⚠️ Note: DSH stores the default preset in `~/.dsh/settings.yaml` (what the Web GUI's "Set as default" writes), and it takes priority **over** the profile's `cordis.patch.yml`. So setting `agent-presets.default` in `cordis.patch.yml` has no effect — you must change settings.
+> ⚠️ 注意：DSH 的默认预设存在 `~/.dsh/settings.yaml` 里（Web GUI 里点「设为默认」写的就是这里），它的优先级**高于** profile 的 `cordis.patch.yml`。所以在 `cordis.patch.yml` 里配 `agent-presets.default` 是无效的，必须改 settings。
 
-**Option 1: use the DSH Web GUI**
+**方式一：用 DSH Web GUI**
 
-In "Agent presets", find your duplicated `claude-code-wrapper` and click "Set as default".
+在「Agent 预设」里找到你刚复制的 `claude-code-wrapper`，点「设为默认」。
 
-**Option 2: command line**
+**方式二：命令行**
 
-Edit `~/.dsh/settings.yaml` and change `agent-presets.default` to `claude-code-wrapper`:
+编辑 `~/.dsh/settings.yaml`，把 `agent-presets.default` 改成 `claude-code-wrapper`：
 
 ```yaml
 agent-presets:
   default: claude-code-wrapper
 ```
 
-**3d.** Restart dsh (settings changes need a restart to take effect). New sessions will automatically use the `claude-code-wrapper` preset and expose the `subagent_claude_code` delegation tool, backed by your wrapper provider.
+**3d.** 重启 dsh（settings 改动需要重启生效）。新会话会自动用 `claude-code-wrapper` 预设，拿到 `subagent_claude_code` 委派工具，背后是你的 wrapper provider。
 
-> If it doesn't take effect after restart, open "Agent presets" in the Web GUI and check whether `claude-code-wrapper` is selected as default — the settings value may have been overridden by a manual selection in the UI.
+> 如果重启后没生效，打开 Web GUI 的「Agent 预设」确认默认选中的是不是 `claude-code-wrapper`——settings 里的值可能被 UI 里的手工选择覆盖过。
 
 ---
 
-## How it works
+## 工作原理
 
-### Two planes, two steps
+### 两个层，两步走
 
-DSH splits a subagent provider's lifecycle across two composition planes:
+DSH 把一个 subagent provider 的生命周期拆在两个层：
 
-| Plane | What happens here | How it's configured |
+| 层 | 这层做什么 | 怎么配 |
 |---|---|---|
-| **Host plane** | Provider registers on `ctx.subagents` | Bundle `cordis.patch.yml` (Step 1) + profile `cordis.patch.yml` for config (Step 2) |
-| **Agent plane** | An agent gets the `subagent_claude_code` delegation tool that calls the provider | Preset `agent.cordis.yml` (Step 3) |
+| **Host 层** | provider 注册到 `ctx.subagents` | bundle 的 `cordis.patch.yml`（第 1 步）+ profile 的 `cordis.patch.yml` 配值（第 2 步） |
+| **Agent 层** | agent 拿到调用这个 provider 的委派工具 | 预设的 `agent.cordis.yml`（第 3 步） |
 
-A bundle's `cordis.patch.yml` can only inject Host-plane rows. The delegation tool lives in the preset's `delegation` group (an isolated agent-plane composition mounted per-session). The two data flows don't cross — this is why even DSH's own built-in `claude-code` provider ships with `disabled: true` and tells users to copy the preset.
+bundle 的 `cordis.patch.yml` 只能注入 Host 层的行。委派工具住在预设的 `delegation` group 里（一个隔离的 agent-plane composition，每个会话独立 mount）。两层数据流不交叉——这就是为什么连 DSH 自带的 `claude-code` provider 都要 `disabled: true`、让用户复制预设去启用。
 
-### What this fork changes
+### 这个 fork 改了什么
 
-Three surgical edits over DSH's built-in `dsh-subagent-claude-code` source:
+在 DSH 自带 `dsh-subagent-claude-code` 源码基础上，三处小改：
 
-| File | Change |
+| 文件 | 改动 |
 |---|---|
-| `src/index.ts` | `Config` interface + schema add `executablePath: z.string().min(1)` (schemastery fields are optional unless `.required()`); `DEFAULT_PROVIDER_NAME` → `'claude-code-wrapper'` (collision-safe); spec construction passes `executablePath` through. |
-| `src/run.ts` | `ClaudeCodeRunSpec` adds `readonly executablePath?: string`; `claudeQueryOptions` passes it as `pathToClaudeCodeExecutable` to the Agent SDK `Options`. |
-| `src/index.ts` | `PACKAGE_NAME` / error prefixes updated to the fork's package name. |
+| `src/index.ts` | `Config` 接口 + schema 加 `executablePath: z.string().min(1)`（schemastery 里字段不加 `.required()` 就是可选的）；`DEFAULT_PROVIDER_NAME` → `'claude-code-wrapper'`（防撞名）；构造 spec 时透传 `executablePath`。 |
+| `src/run.ts` | `ClaudeCodeRunSpec` 加 `readonly executablePath?: string`；`claudeQueryOptions` 把它作为 `pathToClaudeCodeExecutable` 传给 Agent SDK 的 `Options`。 |
+| `src/index.ts` | `PACKAGE_NAME` / 错误前缀改成 fork 的包名。 |
 
-Everything else — unattended callbacks, diagnostics, process-tree disposal, permission handling — is unchanged from upstream.
+其余全部不变——unattended 回调、诊断、进程树回收、权限处理——都和上游一致。
 
-### Why an independent plugin (not a source patch)
+### 为什么做独立插件（而不是改源码）
 
-| | Source patch on a local branch | This independent plugin |
+| | 在本地分支改源码 | 这个独立插件 |
 |---|---|---|
-| DSH update impact | rebase + rebuild every time | **zero** — package lives outside the checkout |
-| Maintenance surface | 3 lines of source, replayed on conflict | 3 lines of source, frozen in this repo |
-| Shareable | manual patch file | `dsh plugin add @yaways/...` |
+| DSH 更新影响 | 每次要 rebase + rebuild | **零**——包在 checkout 外面 |
+| 维护面 | 3 行源码，冲突时要重放 | 3 行源码，冻结在这个仓库里 |
+| 能分享给别人 | 要手动给 patch 文件 | `dsh plugin add @yaways/...` 一键 |
 
-The `executablePath` value lives in `~/.dsh` (your profile), not in source — change the binary or the path without touching the plugin.
+`executablePath` 的值在 `~/.dsh`（你的 profile 里），不在源码里——换二进制或换路径，不用动插件。
 
 ---
 
-## About the build (regular users can skip)
+## 关于构建（普通用户可跳过）
 
-`lib/` (compiled output) is **committed directly to the git repo** — so whether you install from npm or GitHub, `lib/` is there, **no build, no extra steps**.
+`lib/`（编译产物）**直接提交在 git 仓库里**——所以无论从 npm 还是 GitHub 装，装上就有 `lib/`，**不用 build，不用任何额外步骤**。
 
-> Why commit build output to git? Because pnpm 11 has a security policy for git-hosted packages: any git-hosted package with a `prepare`/`postinstall` script is blocked behind an `allowBuilds` allowlist, and that allowlist key includes the full commit hash, which changes every push — impossible to pre-configure. Committing `lib/` removes the need for a `prepare` script, sidestepping the gate entirely. `lib/` is only 208K.
+> 为什么把编译产物提交进 git？因为 pnpm 11 对 git-hosted 包有安全策略：任何带 `prepare`/`postinstall` 脚本的 git-hosted 包都会被挡在 `allowBuilds` 白名单后面，而这个白名单的 key 带完整 commit hash，每次 push 都变，无法预先配置。把 `lib/` 提交进去就不需要 `prepare` 脚本，直接绕过这个限制。`lib/` 只有 208K。
 
-**Only contributors who edit source need to build manually**:
+**只有改源码的贡献者需要手动 build**：
 
 ```sh
-pnpm install --config.auto-install-peers=false   # skips @deepseek-ai/* peers (provided by the host)
+pnpm install --config.auto-install-peers=false   # 跳过 @deepseek-ai/* peer（由 host 提供）
 pnpm run build                                     # tsc -b tsconfig.json → lib/*.js
-git add lib/ && git commit                         # commit lib/ alongside source changes
+git add lib/ && git commit                         # 改完要把 lib/ 一起提交
 ```
 
-`tsc` runs with type-checking off (`noCheck: true`) — the source is a verified copy of upstream, types are guaranteed there, and the build only transpiles, so it doesn't need `@deepseek-ai/*` type definitions to compile. If you have a DSH checkout nearby, `tsconfig.json` already references it for project types (`../deepseek-harness/...`); adjust the relative paths if your layout differs.
+`tsc` 关了类型检查（`noCheck: true`）——源码是上游的验证副本，类型由上游保证，这里只做转译，不需要 `@deepseek-ai/*` 的类型定义就能编译。如果你附近有 DSH checkout，`tsconfig.json` 已经引用它做 project 类型（`../deepseek-harness/...`），布局不同的话调一下相对路径。
 
-Or use `link:` install for live edits without rebuilding + committing each time.
+或者用 `link:` 安装做实时编辑，不用每次 build + commit。
 
-## Update impact
+## 更新影响
 
-| Update source | What's affected |
+| 更新来源 | 影响什么 |
 |---|---|
-| **Your CLI binary updates** | Nothing — `executablePath` points at a path (typically a symlink); the binary upgrades in place. |
-| **DSH updates** | The plugin package (`src/`, `lib/`) is outside the checkout — untouched. Your `executablePath` config is in `~/.dsh` — untouched. The only maintenance surface is **Step 3's preset copy**: if DSH changes the `standard` preset significantly, diff and merge new rows into your `claude-code-wrapper` copy. The only load-bearing line is `tool-subagent-claude-code`. |
-| **Upstream `executablePath` accepted** | If DSH adds `executablePath` to the built-in provider, delete this plugin, remove the Step 3 preset, and set `executablePath` on the built-in `subagent-claude-code` row — the field name matches, so your config carries over with zero migration. |
+| **你的 CLI 二进制更新** | 不影响——`executablePath` 指向一个路径（通常是 symlink），二进制原地升级。 |
+| **DSH 更新** | 插件包（`src/`、`lib/`）在 checkout 外面，碰不到。你的 `executablePath` 配置在 `~/.dsh`，碰不到。唯一的维护面是**第 3 步的预设副本**：如果 DSH 大改了 `standard` 预设，diff 一下把新行 merge 进你的 `claude-code-wrapper` 副本。真正关键的就 `tool-subagent-claude-code` 那一行。 |
+| **上游接受 `executablePath`** | 如果 DSH 给自带的 `subagent-claude-code` 加了 `executablePath`，删掉这个插件、去掉第 3 步的预设、在自带的 `subagent-claude-code` 行上配 `executablePath` 即可——字段名一致，配置零迁移。 |
 
-## Upstream proposal
+## 上游提案
 
-A feature request to add `executablePath` to the built-in `dsh-subagent-claude-code` is posted to DSH GitHub Discussions. This plugin is the "use it now" bridge until (or unless) that lands.
+已向 DSH GitHub Discussions 提交了给自带 `dsh-subagent-claude-code` 加 `executablePath` 的 feature request。这个插件是"现在就能用"的过渡方案，直到（如果）上游接受为止。
 
 ## License
 
