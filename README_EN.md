@@ -202,18 +202,23 @@ The `executablePath` value lives in `~/.dsh` (your profile), not in source — c
 
 ---
 
-## Build (for contributors)
+## About the build (regular users can skip)
 
-This package has no per-package build script in the DSH workspace. It compiles with `tsc` (type-check disabled — the source is a verified copy of upstream; the build only transpiles):
+`lib/` (compiled output) is gitignored — not in the git repo. So how do others use it?
+
+- **From npm** (`dsh plugin add @yaways/...`): the published package includes `lib/`, works out of the box, **no build needed**.
+- **From GitHub** (`dsh plugin add github:yaways/...`): pnpm auto-runs the `prepare` script to compile `lib/`. The first run will prompt you to add an `allowBuilds` entry to a whitelist (pnpm's security policy for git-hosted packages) — add it once and re-run.
+
+**Only contributors who edit source need to build manually**:
 
 ```sh
 pnpm install --config.auto-install-peers=false   # skips @deepseek-ai/* peers (provided by the host)
 pnpm run build                                     # tsc -b tsconfig.json → lib/*.js
 ```
 
-If you have a DSH checkout nearby, `tsconfig.json` already references it for project types (`../deepseek-harness/...`). Adjust the relative paths if your layout differs.
+`tsc` runs with type-checking off (`noCheck: true`) — the source is a verified copy of upstream, types are guaranteed there, and the build only transpiles, so it doesn't need `@deepseek-ai/*` type definitions to compile. If you have a DSH checkout nearby, `tsconfig.json` already references it for project types (`../deepseek-harness/...`); adjust the relative paths if your layout differs.
 
-`lib/` is gitignored; rebuild after source changes before `dsh plugin add` picks them up (or use `link:` install for live edits).
+Rebuild after source changes before `dsh plugin add` picks them up (or use `link:` install for live edits).
 
 ## Update impact
 

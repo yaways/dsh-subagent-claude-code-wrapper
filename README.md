@@ -204,18 +204,23 @@ bundle 的 `cordis.patch.yml` 只能注入 Host 层的行。委派工具住在�
 
 ---
 
-## 构建（给贡献者）
+## 关于构建（普通用户可跳过）
 
-这个包没有 DSH workspace 里的 per-package build 脚本。用 `tsc` 编译（关了类型检查——源码是上游的验证副本，类型由上游保证，这里只做转译）：
+`lib/`（编译产物）在 .gitignore 里，不在 git 仓库里。那别人怎么用？
+
+- **从 npm 装**（`dsh plugin add @yaways/...`）：包发布时带 `lib/`，装上就能用，**不用 build**。
+- **从 GitHub 装**（`dsh plugin add github:yaways/...`）：pnpm 会自动跑 `prepare` 脚本编译出 `lib/`。首次会提示加 `allowBuilds` 白名单（pnnpm 对 git-hosted 包的安全策略），按提示加一次重跑即可。
+
+**只有改源码的贡献者需要手动 build**：
 
 ```sh
 pnpm install --config.auto-install-peers=false   # 跳过 @deepseek-ai/* peer（由 host 提供）
 pnpm run build                                     # tsc -b tsconfig.json → lib/*.js
 ```
 
-如果你附近有 DSH checkout，`tsconfig.json` 已经引用它做 project 类型（`../deepseek-harness/...`）。布局不同的话调一下相对路径。
+`tsc` 关了类型检查（`noCheck: true`）——源码是上游的验证副本，类型由上游保证，这里只做转译，不需要 `@deepseek-ai/*` 的类型定义就能编译。如果你附近有 DSH checkout，`tsconfig.json` 已经引用它做 project 类型（`../deepseek-harness/...`），布局不同的话调一下相对路径。
 
-`lib/` 在 .gitignore 里；改完源码要重新 build，`dsh plugin add` 才能拿到新产物（或者用 `link:` 安装做实时编辑）。
+改完源码重新 build 后，`dsh plugin add` 才能拿到新产物（或者用 `link:` 安装做实时编辑）。
 
 ## 更新影响
 
