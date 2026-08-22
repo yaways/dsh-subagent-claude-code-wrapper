@@ -204,21 +204,21 @@ The `executablePath` value lives in `~/.dsh` (your profile), not in source — c
 
 ## About the build (regular users can skip)
 
-`lib/` (compiled output) is gitignored — not in the git repo. So how do others use it?
+`lib/` (compiled output) is **committed directly to the git repo** — so whether you install from npm or GitHub, `lib/` is there, **no build, no extra steps**.
 
-- **From npm** (`dsh plugin add @yaways/...`): the published package includes `lib/`, works out of the box, **no build needed**.
-- **From GitHub** (`dsh plugin add github:yaways/...`): pnpm auto-runs the `prepare` script to compile `lib/`. The first run will prompt you to add an `allowBuilds` entry to a whitelist (pnpm's security policy for git-hosted packages) — add it once and re-run.
+> Why commit build output to git? Because pnpm 11 has a security policy for git-hosted packages: any git-hosted package with a `prepare`/`postinstall` script is blocked behind an `allowBuilds` allowlist, and that allowlist key includes the full commit hash, which changes every push — impossible to pre-configure. Committing `lib/` removes the need for a `prepare` script, sidestepping the gate entirely. `lib/` is only 208K.
 
 **Only contributors who edit source need to build manually**:
 
 ```sh
 pnpm install --config.auto-install-peers=false   # skips @deepseek-ai/* peers (provided by the host)
 pnpm run build                                     # tsc -b tsconfig.json → lib/*.js
+git add lib/ && git commit                         # commit lib/ alongside source changes
 ```
 
 `tsc` runs with type-checking off (`noCheck: true`) — the source is a verified copy of upstream, types are guaranteed there, and the build only transpiles, so it doesn't need `@deepseek-ai/*` type definitions to compile. If you have a DSH checkout nearby, `tsconfig.json` already references it for project types (`../deepseek-harness/...`); adjust the relative paths if your layout differs.
 
-Rebuild after source changes before `dsh plugin add` picks them up (or use `link:` install for live edits).
+Or use `link:` install for live edits without rebuilding + committing each time.
 
 ## Update impact
 

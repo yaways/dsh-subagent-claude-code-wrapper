@@ -206,21 +206,21 @@ bundle 的 `cordis.patch.yml` 只能注入 Host 层的行。委派工具住在�
 
 ## 关于构建（普通用户可跳过）
 
-`lib/`（编译产物）在 .gitignore 里，不在 git 仓库里。那别人怎么用？
+`lib/`（编译产物）**直接提交在 git 仓库里**——所以无论从 npm 还是 GitHub 装，装上就有 `lib/`，**不用 build，不用任何额外步骤**。
 
-- **从 npm 装**（`dsh plugin add @yaways/...`）：包发布时带 `lib/`，装上就能用，**不用 build**。
-- **从 GitHub 装**（`dsh plugin add github:yaways/...`）：pnpm 会自动跑 `prepare` 脚本编译出 `lib/`。首次会提示加 `allowBuilds` 白名单（pnnpm 对 git-hosted 包的安全策略），按提示加一次重跑即可。
+> 为什么把编译产物提交进 git？因为 pnpm 11 对 git-hosted 包有安全策略：任何带 `prepare`/`postinstall` 脚本的 git-hosted 包都会被挡在 `allowBuilds` 白名单后面，而这个白名单的 key 带完整 commit hash，每次 push 都变，无法预先配置。把 `lib/` 提交进去就不需要 `prepare` 脚本，直接绕过这个限制。`lib/` 只有 208K。
 
 **只有改源码的贡献者需要手动 build**：
 
 ```sh
 pnpm install --config.auto-install-peers=false   # 跳过 @deepseek-ai/* peer（由 host 提供）
 pnpm run build                                     # tsc -b tsconfig.json → lib/*.js
+git add lib/ && git commit                         # 改完要把 lib/ 一起提交
 ```
 
 `tsc` 关了类型检查（`noCheck: true`）——源码是上游的验证副本，类型由上游保证，这里只做转译，不需要 `@deepseek-ai/*` 的类型定义就能编译。如果你附近有 DSH checkout，`tsconfig.json` 已经引用它做 project 类型（`../deepseek-harness/...`），布局不同的话调一下相对路径。
 
-改完源码重新 build 后，`dsh plugin add` 才能拿到新产物（或者用 `link:` 安装做实时编辑）。
+或者用 `link:` 安装做实时编辑，不用每次 build + commit。
 
 ## 更新影响
 
