@@ -1,0 +1,8 @@
+# Optional Profile layer: register the wrapper Claude Code provider on the
+# Host plane. Agent presets separately decide whether one session receives its
+# delegation tool. The provider defaults to name `claude-code-wrapper` so it
+# never collides with the in-tree `claude-code` provider if both are loaded.
+
+- insert:
+    - id: subagent-claude-code-wrapper
+      name: '@yaways/dsh-subagent-claude-code-wrapper'
