@@ -1,4 +1,4 @@
-# @yaways/dsh-subagent-claude-code-wrapper
+# dsh-subagent-claude-code-wrapper
 
 [English](https://github.com/yaways/dsh-subagent-claude-code-wrapper/blob/main/README.md) | 中文
 
